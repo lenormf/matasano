@@ -16,6 +16,8 @@ eMatasanoError fixed_xor(char **out, char const *text, char const *key, size_t s
 
     if (!*out || !text || !key || !sz) {
         return ERR_INVALID_ARGUMENT;
+    } else if (sz % 1) {
+        return ERR_ALIGN_ERROR;
     }
 
     text_n8 = (uint8_t*)strndup(text, sz);

@@ -20,19 +20,18 @@ typedef enum {
     LTR_SPC,
 } eScoreLetter;
 
-struct cipher_score {
+typedef struct cipher_score_s {
     uint8_t key;
     unsigned int scores[6];
     unsigned int total_score;
-};
+} cipher_score_t;
 
-eMatasanoError single_byte_xor_cipher(uint8_t *key, char const *cipher, size_t sz) {
-    struct cipher_score best_score;
+eMatasanoError single_byte_xor_cipher(cipher_score_t *best_score, char const *cipher, size_t sz) {
     size_t text_n8_sz;
     uint8_t *text_n8;
     uint8_t c;
 
-    if (!key || !cipher || !sz) {
+    if (!best_score || !cipher || !sz) {
         return ERR_INVALID_ARGUMENT;
     } else if (sz % 1) {
         return ERR_ALIGN_ERROR;
@@ -48,9 +47,9 @@ eMatasanoError single_byte_xor_cipher(uint8_t *key, char const *cipher, size_t s
         return ERR_NOT_HEXADECIMAL;
     }
 
-    BZERO(&best_score, sizeof(struct cipher_score));
+    BZERO(best_score, sizeof(cipher_score_t));
     for (c = 0; c < 0xFF; c++) {
-        struct cipher_score score;
+        cipher_score_t score;
         unsigned int i;
         uint8_t *buffer;
 
@@ -60,7 +59,7 @@ eMatasanoError single_byte_xor_cipher(uint8_t *key, char const *cipher, size_t s
         }
         memcpy(buffer, text_n8, text_n8_sz);
 
-        BZERO(&score, sizeof(struct cipher_score));
+        BZERO(&score, sizeof(cipher_score_t));
         score.key = c;
         for (i = 0; i < (unsigned int)text_n8_sz; i++) {
             buffer[i] ^= c;
@@ -92,8 +91,8 @@ eMatasanoError single_byte_xor_cipher(uint8_t *key, char const *cipher, size_t s
                 score.total_score += score.scores[i];
             }
             if (!ign && score.scores[LTR_SPC]) {
-                if (score.total_score > best_score.total_score) {
-                    memcpy(&best_score, &score, sizeof(struct cipher_score));
+                if (score.total_score > best_score->total_score) {
+                    memcpy(best_score, &score, sizeof(cipher_score_t));
                 }
             }
         }
@@ -101,20 +100,19 @@ eMatasanoError single_byte_xor_cipher(uint8_t *key, char const *cipher, size_t s
         free(buffer);
     }
 
-    *key = best_score.key;
-
     free(text_n8);
 
     return ERR_NO_ERROR;
 }
 
+#ifndef STRIP_TEST_MAIN
 // ref: key=0x58, text="Cooking MC's like a pound of bacon"
 int main(void) {
     char const cipher[] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     uint8_t text[sizeof(cipher)];
+    cipher_score_t score;
     eMatasanoError err;
     unsigned int i;
-    uint8_t k;
 
     memcpy(text, cipher, sizeof(cipher));
     if (str_hex_to_n8(text)) {
@@ -122,17 +120,18 @@ int main(void) {
     }
     text[sizeof(text) / 2] = 0;
 
-    err = single_byte_xor_cipher(&k, cipher, sizeof(cipher) - 1);
+    err = single_byte_xor_cipher(&score, cipher, sizeof(cipher) - 1);
     if (ERR_NO_ERROR != err) {
         fprintf(stderr, "Error: %s\n", error_to_str(err));
         return 1;
     }
 
     for (i = 0; i < sizeof(cipher) / 2; i++) {
-        text[i] ^= k;
+        text[i] ^= score.key;
     }
 
-    printf("key: %hhX, text: %s\n", k, (char*)text);
+    printf("key: %hhX, text: %s\n", score.key, (char*)text);
 
     return 0;
 }
+#endif

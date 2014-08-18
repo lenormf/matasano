@@ -57,6 +57,7 @@ eMatasanoError fixed_xor(char **out, char const *text, char const *key, size_t s
     return ERR_NO_ERROR;
 }
 
+#ifndef STRIP_TEST_MAIN
 int main(void) {
     char const ref[] = "746865206b696420646f6e277420706c6179";
     char const text[] = "1c0111001f010100061a024b53535009181c";
@@ -76,3 +77,4 @@ int main(void) {
 
     return 0;
 }
+#endif

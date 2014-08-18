@@ -55,6 +55,7 @@ eMatasanoError str_hex_to_base64(char **b64, char const *s, size_t sz) {
     return ERR_NO_ERROR;
 }
 
+#ifndef STRIP_TEST_MAIN
 int main(void) {
     char const ref[] = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
     char const in[] =  "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
@@ -73,3 +74,4 @@ int main(void) {
 
     return 0;
 }
+#endif
